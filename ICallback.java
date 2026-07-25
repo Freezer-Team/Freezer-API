@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 
 import java.lang.reflect.Member;
 
-public interface AbstractCallback {
-    interface ReplacementHookCallback {
+public interface ICallback {
+    interface Replacement {
         Object getThisObject();
 
         Object[] getArgs();
@@ -23,7 +23,7 @@ public interface AbstractCallback {
         Member getMember();
     }
 
-    interface BeforeHookCallback {
+    interface Before {
         Object getThisObject();
 
         Object[] getArgs();
@@ -53,7 +53,7 @@ public interface AbstractCallback {
         Throwable getThrowable();
     }
 
-    interface AfterHookCallback {
+    interface After {
         Object getThisObject();
 
         Object[] getArgs();
