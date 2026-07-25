@@ -50,25 +50,25 @@ on("load", function() {
     }
 });
 
-async function onBeforeThaw(freezeContext, temporary) {
-    log.i("[DemoScript] beforeThaw 触发，包名: " + freezeContext.getPackageName() + ", 是否临时解冻: " + temporary);
+async function onBeforeThaw(app, temporary) {
+    log.i("[DemoScript] beforeThaw 触发，包名: " + app.getPackageName() + ", 是否临时解冻: " + temporary);
     await sleep(7000);
-    log.i("[DemoScript] beforeThaw2 触发，包名: " + freezeContext.getPackageName() + ", 是否临时解冻: " + temporary);
+    log.i("[DemoScript] beforeThaw2 触发，包名: " + app.getPackageName() + ", 是否临时解冻: " + temporary);
 }
 
 // 当应用被冻结后触发
-on("afterFreeze", async function(freezeContext, foregroundType) {
-    log.i("[DemoScript] afterFreeze 触发，包名: " + freezeContext.getPackageName() + ", 前台类型: " + foregroundType);
+on("afterFreeze", async function(app, foregroundType) {
+    log.i("[DemoScript] afterFreeze 触发，包名: " + app.getPackageName() + ", 前台类型: " + foregroundType);
 });
 
 // 当应用即将解冻时触发
-on("beforeThaw", function(freezeContext, temporary) {
-    onBeforeThaw(freezeContext, temporary);
+on("beforeThaw", function(app, temporary) {
+    onBeforeThaw(app, temporary);
 });
 
 // 当应用解冻完成后触发
-on("afterThaw", function(freezeContext, temporary) {
-    log.i("[DemoScript] afterThaw 触发，包名: " + freezeContext.getPackageName());
+on("afterThaw", function(app, temporary) {
+    log.i("[DemoScript] afterThaw 触发，包名: " + app.getPackageName());
 });
 
 // 系统热重载时调用，可以在这里做一些资源释放或状态保存
