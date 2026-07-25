@@ -13,14 +13,14 @@ on("load", function() {
     log.i("[Example] 脚本已成功加载！");
 
     try {
-        var ActiveServices = hooker.findClass("com.android.server.am.ActiveServices");
+        var ActiveServices = reflection.findClass("com.android.server.am.ActiveServices");
 
         if (!ActiveServices) {
             log.e("[Example] 未找到 ActiveServices, 放弃 Hook");
             return;
         }
 
-        var bumpMethod = hooker.findMethod(
+        var bumpMethod = reflection.findMethod(
             ActiveServices, 
             "bumpServiceExecutingLocked", 
             "com.android.server.am.ServiceRecord", 
@@ -35,10 +35,10 @@ on("load", function() {
             return;
         }
 
-        hook.before(bumpMethod, async function(callback) {
+        hooker.before(bumpMethod, async function(callback) {
             var record = callback.getArgs()[0];
-            var package = hooker.getObjectField(record, "packageName");
-            var userId = Number(hooker.getObjectField(record, "userId"));
+            var package = reflection.getObjectField(record, "packageName");
+            var userId = Number(reflection.getObjectField(record, "userId"));
             var app = apps.get(package, userId);
             if (!app)
                 return;
