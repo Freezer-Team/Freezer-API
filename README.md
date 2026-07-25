@@ -254,12 +254,18 @@ Hook：
 var unhook = hooker.before(method, function (callback) {
 });
 
+unhook.unhook();
+
 var unhook = hooker.after(method, function (callback) {
 });
+
+unhook.unhook();
 
 var unhook = hooker.replace(method, function (callback) {
     return null;
 });
+
+unhook.unhook();
 ```
 
 ## 5. 脚本对象
