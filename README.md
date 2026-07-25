@@ -11,7 +11,7 @@
 - 冻结/解冻控制：支持执行冻结和执行解冻。
 - Java 反射和 Hook：支持查找类、方法、字段、构造器和注册 Hook。
 
-## 3. 最小脚本
+## 2. 最小脚本
 
 ```js
 registerScript({
@@ -71,7 +71,7 @@ function allowFrozen(app) {
 - 返回 `null` 或不定义 `allowFrozen`：允许冻结。
 - 返回字符串：禁止冻结，字符串是拒绝原因。
 
-## 4. 异步与并发
+## 3. 异步与并发
 
 ### `async function`
 
@@ -164,7 +164,7 @@ synchronized(lock, function () {
 });
 ```
 
-## 5. 注入的全局对象
+## 4. 注入的全局对象
 
 ### `log`
 
@@ -262,7 +262,7 @@ var unhook = hooker.replace(method, function (callback) {
 });
 ```
 
-## 6. 脚本对象
+## 5. 脚本对象
 
 ### `AppRecord`
 
@@ -299,7 +299,7 @@ process.isFrozenBinder();
 process.isIsolated();
 ```
 
-## 7. 完整示例
+## 6. 完整示例
 
 ```js
 registerScript({
@@ -337,7 +337,7 @@ on("shutdown", function () {
 });
 ```
 
-## 8. 注意事项
+## 7. 注意事项
 
 1. `async` 任务的异常会记录到脚本日志，不能通过原事件调用栈返回。
 2. `allowFrozen` 是同步判定函数，不能写成需要后台等待的异步逻辑。
