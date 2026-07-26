@@ -83,7 +83,7 @@ function isIgnoreError() {
 }
 
 // 应用冻结前检测函数
-function allowFrozen(app) {
+function whyNotFreeze(app) {
     // 返回 字符串内容 表示不允许这个应用冻结，返回 null 表示允许这个应用冻结。默认返回 null。
     return null;
 }
