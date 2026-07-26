@@ -2,7 +2,7 @@
 
 ## 1. 特性概览
 
-- 冻结拦截：脚本可以通过 `allowFrozen` 返回原因，阻止指定应用被冻结。
+- 冻结拦截：脚本可以通过 `whyNotFreeze` 返回原因，阻止指定应用被冻结。
 - 线程池异步：支持 `async function`，每个脚本拥有独立的异步执行线程池。
 - 任务等待：支持 `await` 等待另一个 `async function` 的返回值。
 - 延时执行：支持 `sleep(milliseconds)`。
@@ -53,12 +53,12 @@ on("afterThaw", function (app, temporary) {
 | `beforeThaw` | `app, temporary` | 应用开始解冻前调用 |
 | `afterThaw` | `app, temporary` | 应用解冻完成后调用 |
 | `ignoreError` | 无 | 返回 `true` 时忽略该脚本事件异常 |
-| `allowFrozen` | `app` | 返回非空字符串时禁止冻结 |
+| `whyNotFreeze` | `app` | 返回非空字符串时禁止冻结 |
 
-`allowFrozen` 使用示例：
+`whyNotFreeze` 使用示例：
 
 ```js
-function allowFrozen(app) {
+function whyNotFreeze(app) {
     if (app.getPackageName() === "com.example.music") {
         return "音乐应用正在播放";
     }
@@ -68,7 +68,7 @@ function allowFrozen(app) {
 
 规则：
 
-- 返回 `null` 或不定义 `allowFrozen`：允许冻结。
+- 返回 `null` 或不定义 `whyNotFreeze`：允许冻结。
 - 返回字符串：禁止冻结，字符串是拒绝原因。
 
 ## 3. 异步与并发
@@ -272,7 +272,7 @@ unhook.unhook();
 
 ### `AppRecord`
 
-冻结/解冻事件、`allowFrozen` 和 `apps` 查询返回此对象：
+冻结/解冻事件、`whyNotFreeze` 和 `apps` 查询返回此对象：
 
 ```js
 app.getPackageName();
@@ -316,7 +316,7 @@ registerScript({
 
 var lock = {};
 
-function allowFrozen(app) {
+function whyNotFreeze(app) {
     if (app.getPackageName() === "com.example.player") {
         return "播放器由Musicplayer Guard脚本保护 禁止冻结";
     }
@@ -346,7 +346,7 @@ on("shutdown", function () {
 ## 7. 注意事项
 
 1. `async` 任务的异常会记录到脚本日志，不能通过原事件调用栈返回。
-2. `allowFrozen` 是同步判定函数，不能写成需要后台等待的异步逻辑。
+2. `whyNotFreeze` 是同步判定函数，不能写成需要后台等待的异步逻辑。
 3. FJE 的 Java 对象和 Freezer API 对象可能不是普通 JavaScript 对象，不要随意复制或序列化。
 4. Hook、冻结、解冻 API 会直接影响系统服务，脚本应处理 `null` 返回值并避免长时间阻塞。
 5. 脚本卸载时会停止接收新异步任务，并等待已有任务结束；长时间 `sleep` 或死循环会延迟卸载。
