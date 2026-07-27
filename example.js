@@ -58,8 +58,10 @@ on("freeze", async function(event) {
 
 // 当应用即将解冻时触发
 on("unfreeze", function(event) {
-    if (event.getType() == "PRE")
+    if (event.getType() == "PRE") {
         log.i("[DemoScript] unfreeze 触发，包名: " + event.getAppRecord().getPackageName());
+        event.cancel(); // 阻止解冻
+    }
 });
 
 // 系统热重载时调用，可以在这里做一些资源释放或状态保存
