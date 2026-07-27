@@ -50,40 +50,19 @@ on("load", function() {
     }
 });
 
-async function onBeforeThaw(app, temporary) {
-    log.i("[DemoScript] beforeThaw 触发，包名: " + app.getPackageName() + ", 是否临时解冻: " + temporary);
-    await sleep(7000);
-    log.i("[DemoScript] beforeThaw2 触发，包名: " + app.getPackageName() + ", 是否临时解冻: " + temporary);
-}
-
 // 当应用被冻结后触发
-on("afterFreeze", async function(app, foregroundType) {
-    log.i("[DemoScript] afterFreeze 触发，包名: " + app.getPackageName() + ", 前台类型: " + foregroundType);
+on("freeze", async function(event) {
+    if (event.getType() == "POST")
+        log.i("[DemoScript] freeze 触发，包名: " + event.getAppRecord().getPackageName() + ", 前台类型: " + event.getForegroundType());
 });
 
 // 当应用即将解冻时触发
-on("beforeThaw", function(app, temporary) {
-    onBeforeThaw(app, temporary);
-});
-
-// 当应用解冻完成后触发
-on("afterThaw", function(app, temporary) {
-    log.i("[DemoScript] afterThaw 触发，包名: " + app.getPackageName());
+on("unfreeze", function(event) {
+    if (event.getType() == "PRE")
+        log.i("[DemoScript] unfreeze 触发，包名: " + event.getAppRecord().getPackageName());
 });
 
 // 系统热重载时调用，可以在这里做一些资源释放或状态保存
 on("shutdown", function() {
     log.i("[DemoScript] 脚本正在卸载...");
 });
-
-// 错误忽略配置函数
-function isIgnoreError() {
-    // 返回 true 表示脚本内部抛出异常时不输出到日志中，返回 false 表示输出异常到日志中。默认返回 false。
-    return true;
-}
-
-// 应用冻结前检测函数
-function whyNotFreeze(app) {
-    // 返回 字符串内容 表示不允许这个应用冻结，返回 null 表示允许这个应用冻结。默认返回 null。
-    return null;
-}
