@@ -24,12 +24,12 @@ if (app != null) {
 
 | 方法 | 参数 | 返回值 | 含义 |
 | --- | --- | --- | --- |
-| `setPlaybackActivity(value)` | `int` | `boolean` | 设置播放活动状态。整数值的枚举未在本文定义。 |
-| `getPlaybackActivity()` | 无 | `int` | 读取播放活动状态。不要猜测整数值。 |
-| `setPlaybackState(value)` | `int` | `boolean` | 设置媒体播放状态。整数值的枚举未在本文定义。 |
-| `getPlaybackState()` | 无 | `int` | 读取媒体播放状态。不要猜测整数值。 |
+| `setPlaybackActivity(value)` | `int` | `boolean` | 设置播放活动状态。整数值的枚举为`PLAYER_STATE_UNKNOWN=-1`, `PLAYER_STATE_RELEASED=0`, `PLAYER_STATE_IDLE=1`, `PLAYER_STATE_STARTED=2`, `PLAYER_STATE_PAUSED=3`, `PLAYER_STATE_STOPPED=4`。 |
+| `getPlaybackActivity()` | 无 | `int` | 读取播放活动状态。返回值同setPlaybackActivity的值。 |
+| `setPlaybackState(value)` | `int` | `boolean` | 设置媒体播放状态。整数值的枚举为android.media.session.PlaybackState中的STATE。 |
+| `getPlaybackState()` | 无 | `int` | 读取媒体播放状态。返回值为android.media.session.PlaybackState中的STATE。 |
 | `setPlaybackPosition(value)` | `long` | `boolean` | 设置媒体播放位置。具体单位和特殊值以目标版本的公开说明为准。 |
-| `getPlaybackPosition()` | 无 | `long` | 读取媒体播放位置。不要猜测单位或特殊值。 |
+| `getPlaybackPosition()` | 无 | `long` | 读取媒体播放位置，默认为android.media.session.PlaybackState中的PLAYBACK_POSITION_UNKNOWN。 |
 | `setAudio(value)` | `boolean` | `boolean` | 设置应用是否处于音频活动状态。 |
 | `isAudio()` | 无 | `boolean` | 是否处于音频活动状态。 |
 | `setScreenRecording(value)` | `boolean` | `boolean` | 设置应用是否处于屏幕录制状态。 |
@@ -77,17 +77,17 @@ if (app != null) {
 | `isRecording()` | 无 | `boolean` | 是否处于录音状态。 |
 | `setVPN(value)` | `boolean` | `boolean` | 设置是否处于 VPN 状态。 |
 | `isVPN()` | 无 | `boolean` | 是否处于 VPN 状态。 |
-| `setAccessibility(value)` | `boolean` | `boolean` | 设置是否处于无障碍状态。 |
-| `isAccessibility()` | 无 | `boolean` | 是否处于无障碍状态。 |
+| `setAccessibility(value)` | `boolean` | `boolean` | 设置是否正在使用无障碍服务。 |
+| `isAccessibility()` | 无 | `boolean` | 是否正在使用无障碍状态。 |
 | `setInput(value)` | `boolean` | `boolean` | 设置是否处于输入法状态。 |
 | `isInput()` | 无 | `boolean` | 是否处于输入法状态。 |
-| `setCredential(value)` | `boolean` | `boolean` | 设置是否处于凭据服务状态。 |
-| `isCredential()` | 无 | `boolean` | 是否处于凭据服务状态。 |
-| `setAutofill(value)` | `boolean` | `boolean` | 设置是否处于自动填充状态。 |
-| `isAutofill()` | 无 | `boolean` | 是否处于自动填充状态。 |
+| `setCredential(value)` | `boolean` | `boolean` | 设置是否正在使用凭据服务服务。 |
+| `isCredential()` | 无 | `boolean` | 是否正在使用凭据服务状态。 |
+| `setAutofill(value)` | `boolean` | `boolean` | 设置是否正在使用自动填充服务。 |
+| `isAutofill()` | 无 | `boolean` | 是否正在使用自动填充状态。 |
 | `setInFullBackup(value)` | `boolean` | `boolean` | 设置是否处于完整备份状态。 |
 | `isInFullBackup()` | 无 | `boolean` | 是否处于完整备份状态。 |
 | `setCamera(value)` | `boolean` | `boolean` | 设置是否处于相机使用状态。 |
 | `isCamera()` | 无 | `boolean` | 是否处于相机使用状态。 |
-| `setPhoneState(value)` | `int` | `boolean` | 设置电话状态。整数值的枚举未在本文定义。 |
-| `getPhoneState()` | 无 | `int` | 读取电话状态。不要猜测整数值。 |
+| `setPhoneState(value)` | `int` | `boolean` | 设置电话状态。整数值的枚举为`MODE_NORMAL=0`, `MODE_RINGTONE=1`, `MODE_IN_CALL=2`, `MODE_IN_COMMUNICATION=3`。 |
+| `getPhoneState()` | 无 | `int` | 读取电话状态。返回值同setPhoneState的值。 |
