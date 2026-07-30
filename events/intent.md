@@ -10,6 +10,7 @@ Intent 目标为冻结应用时触发。
 **取消语义：** 取消状态决定 Freezer 是否临时解冻目标应用：
 
 - `cancel()` / `setCancelled(true)`：限制临时解冻。
-- `setCancelled(false)`：允许临时解冻。
+- `setCancelled(false)`：强制允许临时解冻。
+- 不设置时默认按照系统allowBackground决定是否临时解冻
 
 这不会取消 Android Intent 本身。
