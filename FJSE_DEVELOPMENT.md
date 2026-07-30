@@ -69,7 +69,6 @@ on('freeze', function (event) {
 | `ui` | 注册脚本设置页和控件 |
 | `CakeHooker` | 暴露底层 Hook 类；优先使用 `hooker` |
 | `hooker` | `before`、`after`、`replace` 的脚本友好封装 |
-| `__scriptTag` | 当前脚本文件名；不要修改 |
 
 ### 生命周期和事件
 
