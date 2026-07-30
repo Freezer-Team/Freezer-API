@@ -29,4 +29,8 @@ on('unfreeze', function (event) {
         event.cancel(); // 无效：同步事件回调已经返回
     });
 });
+
+on('unfreeze', async function (event) {
+    event.cancel(); // 无效：同步事件回调已经返回
+});
 ```
