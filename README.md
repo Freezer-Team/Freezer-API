@@ -23,10 +23,6 @@ registerScript({
 on("load", function () {
     log.i("Example loaded");
 });
-
-on("afterThaw", function (app, temporary) {
-    log.i("thawed: " + app.getPackageName());
-});
 ```
 
 ### `registerScript(info)`
