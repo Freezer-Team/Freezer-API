@@ -246,28 +246,28 @@ Hook 自动按脚本文件名归属，脚本卸载时统一解除。Hook 回调�
 ## 7. 设置页 UI
 
 ```js
-ui.registerPage('FJSE 示例', function (page) {
-    page.addSwitch('启用', '是否启用示例逻辑', true, function (value, packageName) {
+ui.registerPage('FJSE 示例', function () {
+    this.addSwitch('启用', '是否启用示例逻辑', true, function (value, packageName) {
         log.i('启用=' + value + ', package=' + packageName);
     });
 
-    page.addDropdown('模式', ['安全', '激进'], 0, function (value, packageName) {
+    this.addDropdown('模式', ['安全', '激进'], 0, function (value, packageName) {
         log.i('模式=' + value);
     });
 
-    page.addSlider('延迟', 0, 1000, 10, 100, function (value, packageName) {
+    this.addSlider('延迟', 0, 1000, 10, 100, function (value, packageName) {
         log.i('延迟=' + value);
     });
 
-    page.addText('这是说明文字');
+    this.addText('这是说明文字');
 });
 ```
 
 也可以指定应用包名：
 
 ```js
-ui.registerPage('com.example.app', '应用设置', function (page) {
-    page.addText('仅显示在目标应用设置中');
+ui.registerPage('com.example.app', '应用设置', function () {
+    this.addText('仅显示在目标应用设置中');
 });
 ```
 
