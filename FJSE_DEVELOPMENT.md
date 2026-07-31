@@ -59,9 +59,9 @@ on('freeze', function (event) {
 | `unfreezeService` | 解冻和临时解冻 |
 | `log` | `d`、`i`、`w`、`e` 日志 |
 | `apps` | 查询应用对象 |
-| `processes` | 查询 `ProcessRecordAPI` |
+| `processes` | 查询 `ProcessRecordAPI` 和 获取 ProcessList 实例 |
 | `reflection` | 查找/调用 Java 类、字段、方法和构造器；创建 Hook |
-| `activityManagerService` | 获取 ActivityManager Context |
+| `activityManagerService` | 获取 ActivityManager Context 和 ActivityManagerService 实例 |
 | `network` | 网络管理服务操作 |
 | `systemChecker` | 查询系统类型 |
 | `appSettings` | 修改应用配置 |
@@ -162,12 +162,38 @@ var byObject = processes.getProcessRecord(systemProcessObject);
 `ProcessRecordAPI` 常用 getter：
 
 ```text
-getPackageName()              getProcessName()
-getProcessNameWithIsolated()  getUserId()
-getUid()                      getRunningUid()
-getPid()                      isFrozen()
-isFrozenBinder()              isIsolated()
-getAppRecord()                getApplicationInfo()
+getPackageName()                        getProcessName()
+getProcessNameWithIsolated()            getUserId()
+getUid()                                getRunningUid()
+getPid()                                isFrozen()
+isFrozenBinder()                        isIsolated()
+getAppRecord()                          getApplicationInfo()
+getInstance()                           isKilled()
+isKilledByAm()                          killLocked(String reason, int subReason)
+isInFullBackup()                        getStartSeq()
+isMainProcess()                         isDeathProcess()
+isTargetProcess(boolean ignoreAppState) getZygote()
+```
+
+`AppZygoteAPI` 常用 getter：
+
+```text
+getZygote()                             getUid()
+getUserId()                             getPid()
+getApplicationInfo()                    getPackageName()
+getProcessName()                        toAppRecord()
+getInstance()
+```
+
+`ServiceRecordAPI` 常用 getter：
+
+```text
+getProcessRecord()                      getPackageName()
+getUserId()                             getName()
+getApplicationInfo()                    isAllowsBackgroundForegroundServiceStarts()
+getExecuteNesting()                     getForegroundServiceType()
+getAppRecord()                          getForegroundNotification()
+getInstance()
 ```
 
 查询不到对象时返回 `null`。调用服务前应先做空值检查。
@@ -202,7 +228,7 @@ globalSettings.set('someText', 'value', true);
 
 设置方法的返回值是底层设置操作的 `boolean` 结果。参数名和值的合法性由对应设置实现决定。
 
-`network.destroyApp(app)`、`activityManagerService.getContext()` 和 `systemChecker.getSystemType()` 也属于高权限系统操作，调用前确认目标和失败行为。
+`network.destroyApp(app), network.getInstance()`、`activityManagerService.getContext(), activityManagerService.getInstance()` 和 `systemChecker.getSystemType()` 也属于高权限系统操作，调用前确认目标和失败行为。
 
 ## 6. 反射与 Hook
 

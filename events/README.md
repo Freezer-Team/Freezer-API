@@ -30,6 +30,8 @@ on('事件名', function (event) {
 - [`autoFill`](autoFill.md)
 - [`credential`](credential.md)
 - [`accessibility`](accessibility.md)
+- [`backup`](backup.md)
+- [`vpn`](vpn.md)
 
 ## 通知
 
@@ -53,6 +55,7 @@ on('事件名', function (event) {
 - [`intent`](intent.md)
 - [`bindService`](bindService.md)
 - [`unbindService`](unbindService.md)
+- [`trimMemory`](trimMemory.md)
 
 ## 冻结与解冻
 
