@@ -32,12 +32,14 @@ on('事件名', function (event) {
 - [`accessibility`](accessibility.md)
 - [`backup`](backup.md)
 - [`vpn`](vpn.md)
+- [`clickTile`](clickTile.md)
 
 ## 通知
 
 - [`addNotification`](addNotification.md)
 - [`removeNotification`](removeNotification.md)
 - [`updateNotification`](updateNotification.md)
+- [`checkNotificationState`](checkNotificationState.md)
 
 ## 媒体与音频
 
@@ -56,6 +58,11 @@ on('事件名', function (event) {
 - [`bindService`](bindService.md)
 - [`unbindService`](unbindService.md)
 - [`trimMemory`](trimMemory.md)
+- [`clickTile`](clickTile.md)
+- [`screen`](screen.md)
+- [`keyguardShowing`](keyguardShowing.md)
+- [`startBroadcast`](startBroadcast.md)
+- [`stopBroadcast`](stopBroadcast.md)
 
 ## 冻结与解冻
 
