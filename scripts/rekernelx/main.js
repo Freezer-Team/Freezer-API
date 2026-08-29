@@ -1,9 +1,3 @@
-registerScript({
-    name: "ReKernelX",
-    version: "1.0",
-    authors: ["Timeline"]
-});
-
 var BINDER_TYPE = {
     TRANSACTION: 1,
     REPLY: 2,
