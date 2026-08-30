@@ -8,7 +8,7 @@ Use this guide when creating, reviewing, or modifying scripts for Freezer Java S
 
 Treat the following public documents as the only source of truth:
 
-- [`FJSE_DEVELOPMENT.md`](FJSE_DEVELOPMENT.md)：FJSE API、运行方式、脚本示例和开发规范。
+- [`README.md`](README.md)：FJSE API、运行方式、脚本示例和开发规范。
 - [`events/README.md`](events/README.md)：完整事件索引。
 - [`events/<eventName>.md`](events/)：每个事件的参数、返回类型、取值含义、阶段和取消行为。
 - [`api/app-state.md`](api/app-state.md)：`app.getState()` 返回对象的完整方法、参数和返回值。
@@ -17,7 +17,7 @@ Do not assume access to Freezer source code, repository internals, private class
 
 ## Workflow
 
-1. Read `FJSE_DEVELOPMENT.md` before writing a script.
+1. Read `README.md` before writing a script.
 2. For every registered event, read its matching file under `events/` before using the event object.
 3. Read [`api/app-state.md`](api/app-state.md) before using methods on the object returned by `app.getState()`.
 4. Use only APIs and event methods explicitly documented in the public references.
@@ -48,11 +48,11 @@ When adding a public event document, create `events/<eventName>.md` and describe
 - Whether cancellation is effective and exactly what it changes.
 - A minimal JavaScript example when the behavior is not obvious.
 
-Add the event to `events/README.md` and keep the event list in `FJSE_DEVELOPMENT.md` synchronized.
+Add the event to `events/README.md` and keep the event list in `README.md` synchronized.
 
 ## Review checklist
 
-- [ ] All used globals are documented in `FJSE_DEVELOPMENT.md`.
+- [ ] All used globals are documented in `README.md`.
 - [ ] Every event method is documented in its `events/*.md` file.
 - [ ] Every used `app.getState()` method is documented in `api/app-state.md`.
 - [ ] Nullable and unknown values are handled.
