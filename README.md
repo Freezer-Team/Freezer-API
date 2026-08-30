@@ -1,320 +1,359 @@
-# Freezer API 使用文档
+# FJSE 开发文档
 
-## 1. 特性概览
+Freezer Java Script Engine（FJSE）是 Freezer 内置的 Rhino JavaScript 运行时。脚本运行在 Freezer 的系统模块环境中，可访问应用状态、冻结服务、事件、反射 Hook、配置和脚本设置页。
 
-- 冻结拦截：脚本可以通过 `event.cancel or event.setCancelled(true)` 阻止指定事件冻结应用。
-- 线程池异步：支持 `async function`，每个脚本拥有独立的异步执行线程池。
-- 任务等待：支持 `await` 等待另一个 `async function` 的返回值。
-- 延时执行：支持 `sleep(milliseconds)`。
-- 对象锁：支持 `synchronized(lock) { ... }` 临界区。
-- 应用/进程查询：支持访问 Freezer 的应用缓存和进程列表。
-- 冻结/解冻控制：支持执行冻结和执行解冻。
-- Java 反射和 Hook：支持查找类、方法、字段、构造器和注册 Hook。
+> **权限提示**：FJSE 不是沙箱。脚本拥有系统模块权限，`reflection`、`activityManagerService` 和 `network` 可能改变系统行为。只运行可信脚本。
 
-## 2. 最小脚本
+## 1. 快速开始
 
+### 模块结构说明
+核心控制逻辑：main.js（API 入口与接口导出）
+
+安装/部署脚本：install.js（处理环境初始化与动态库加载）
+
+配置文件：data.yaml（模块参数与 API 规则定义）
+
+原生架构支持：native/ 目录下包含 arm, arm64, x86, x86_64 的以 .so 结尾的核心底层库
+
+### 脚本加载
+FJSE只会自动加载文件名为 `main.js` 的文件。Freezer 启动时加载脚本；脚本管理器可以导入、删除或重新加载脚本。
+
+### 最小脚本
+
+data.yaml:
+```yaml
+id: example
+name: Example Module
+author: Timeline
+version: v1.0
+versionCode: 1
+description: |
+  Example module
+```
+
+install.js:
 ```js
-registerScript({
-    name: "Example",
-    version: "1.0.0",
-    authors: ["Freezer"]
+println("模块已安装");
+```
+
+main.js:
+```js
+on('load', function () {
+    log.i('模块已加载');
 });
 
-on("load", function () {
-    log.i("Example loaded");
+on('shutdown', function () {
+    log.i('模块即将关闭');
+});
+
+on('action', function () {
+    log.i('用户执行操作');
+});
+
+on('freeze', function (event) {
+    var app = event.getAppRecord();
+    if (app != null) log.d('冻结: ' + app.getPackageName());
 });
 ```
 
-### `registerScript(info)`
+## 2. 运行模型
 
-注册脚本信息。`info` 是对象，可以包含：
+- Rhino 使用 ES6 语法。
+- 事件回调默认同步执行；不要在回调中做长时间阻塞工作。
+- `async(fn, ...)` 在后台执行并返回可等待的任务结果；用 `__await(future)` 等待结果。需要影响当前事件结果的逻辑（尤其是 `event.cancel()`）不得放入 `async` (install.js不可用 async, await, synchronized 方法)。
+- 脚本卸载时会调用 `shutdown`，并移除脚本创建的事件监听、设置页和 Hook。
+- 不要假设存在 `require` 或 `module`。
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `name` | `String` | 脚本名称 |
-| `version` | `String` | 脚本版本 |
-| `authors` | `Array<String>` | 作者列表 |
+## 3. 全局对象与函数
 
-### `on(eventName, eventHandler)`
+以下名称是脚本可直接使用的公开对象：
 
-注册事件处理函数。事件名不区分大小写，同一事件重复注册时后注册的函数覆盖前一个函数。
+| 名称 | 用途 |
+| --- | --- |
+| `freezerService` | 发送冻结消息、移除冻结消息 |
+| `unfreezeService` | 解冻和临时解冻 |
+| `log` | `d`、`i`、`w`、`e` 日志 |
+| `apps` | 查询应用对象 |
+| `processes` | 查询 `ProcessRecordAPI` 和 获取 ProcessList 实例 |
+| `reflection` | 查找/调用 Java 类、字段、方法和构造器；创建 Hook |
+| `activityManagerService` | 获取 ActivityManager Context 和 ActivityManagerService 实例 |
+| `network` | 网络管理服务操作 |
+| `systemChecker` | 查询系统类型 |
+| `appSettings` | 修改应用配置 |
+| `globalSettings` | 修改全局配置 |
+| `ui` | 注册脚本设置页和控件 (install.js不可用) |
+| `CakeHooker` | 暴露底层 Hook 类；优先使用 `hooker` (install.js不可用) |
+| `hooker` | `before`、`after`、`replace` 的脚本友好封装 (install.js不可用) |
 
-支持的事件：
-
-| 事件 | 参数 | 说明 |
-| --- | --- | --- |
-| `load` | 无 | 脚本加载并执行完成后调用 |
-| `shutdown` | 无 | 脚本卸载前调用 |
-
-## 3. 异步与并发
-
-### `async function`
-
-`async function` 会在当前脚本的线程池中执行。调用它会立即返回一个任务对象，不会阻塞调用线程。
+### 生命周期和事件
 
 ```js
-async function refreshApp(app) {
-    sleep(100);
-    log.i("refresh: " + app.getPackageName());
-    return "done";
+on('load', function () { /* 加载完成 */ });
+on('shutdown', function () { /* 卸载前清理 */ });
+on('action', function () { /* 执行操作 */ });
+on('freeze', function (event) { /* 事件对象作为唯一参数 */ });
+```
+
+事件对象提供与事件类型对应的属性，例如应用、状态和事件阶段信息。每个事件的完整参数、取值含义和取消行为见 [`events/README.md`](events/README.md)。可取消事件支持：
+
+```js
+on('freeze', function (event) {
+    if (shouldBlock(event)) event.cancel();
+});
+```
+
+只有事件本身支持取消时，`cancel()` 才会改变系统行为；不要默认所有事件都可取消。
+
+### 内置函数
+
+```js
+async function future(value) {
+    return value * 2;
+};
+
+var result = await future(21); // 42
+
+sleep(100);
+synchronized(function () {
+    // 使用脚本级锁
+});
+synchronized(lockObject, function () {
+    // 使用对象身份锁
+});
+
+load('helper.js'); // 相对当前脚本目录解析
+```
+
+`load()` 只读取并执行文件，不提供模块隔离。`async` 返回的 Future 在脚本销毁时可能无法提交；`__await` 被中断时返回 `null`。
+
+## 4. 应用与进程 API
+
+### 应用查询
+
+```js
+var app = apps.get('com.example.app', 0);
+var byUid = apps.getByUid(10000);
+var targets = apps.getRunningTargets();
+```
+
+应用常用属性：
+
+```text
+getPackageName()       getUserId()          getUid()
+getApplicationInfo()   isXposed()           isFrozen()
+isSystem()             getState()           isTargetApp()
+getCategory()          getProcesses()
+```
+
+应用状态对象通过 `app.getState()` 获取，完整方法、参数和返回值见 [`api/app-state.md`](api/app-state.md)。例如：
+
+```js
+var app = apps.get('com.example.app', 0);
+if (app != null) {
+    var state = app.getState();
+    log.i('可见=' + state.isVisible());
+    log.i('窗口=' + state.isWindow());
+    log.i('播放状态=' + state.getPlaybackState());
 }
-
-refreshApp(apps.get("com.example.app", 0));
 ```
 
-异步函数可以作为事件处理器：
+### 进程查询
 
 ```js
-on("visible", async function (event) {
-    sleep(200);
-    log.i("background work: " + app.getPackageName());
-});
+var process = processes.getProcessRecord('com.example.app', 10000);
+var byPid = processes.getProcessRecord(1234);
+var byObject = processes.getProcessRecord(systemProcessObject);
 ```
 
-### `sleep(milliseconds)`
+`ProcessRecordAPI` 常用 getter：
 
-阻塞当前线程指定的毫秒数。建议只在 `async function` 内使用；如果在普通事件函数中使用，会阻塞事件分发线程。
+```text
+getPackageName()                        getProcessName()
+getProcessNameWithIsolated()            getUserId()
+getUid()                                getRunningUid()
+getPid()                                isFrozen()
+isFrozenBinder()                        isIsolated()
+getAppRecord()                          getApplicationInfo()
+getInstance()                           isKilled()
+isKilledByAm()                          killLocked(String reason, int subReason)
+isInFullBackup()                        getStartSeq()
+isMainProcess()                         isDeathProcess()
+isTargetProcess(boolean ignoreAppState) getZygote()
+```
+
+`AppZygoteAPI` 常用 getter：
+
+```text
+getZygote()                             getUid()
+getUserId()                             getPid()
+getApplicationInfo()                    getPackageName()
+getProcessName()                        toAppRecord()
+getInstance()
+```
+
+`ServiceRecordAPI` 常用 getter：
+
+```text
+getProcessRecord()                      getPackageName()
+getUserId()                             getName()
+getApplicationInfo()                    isAllowsBackgroundForegroundServiceStarts()
+getExecuteNesting()                     getForegroundServiceType()
+getAppRecord()                          getForegroundNotification()
+getInstance()
+```
+
+查询不到对象时返回 `null`。调用服务前应先做空值检查。
+
+## 5. 冻结、解冻和配置
 
 ```js
-async function delayed() {
-    sleep(1000);
-    log.i("one second later");
+if (app != null) {
+    freezerService.sendFreezeMessage(app);
+    freezerService.sendFreezeMessage(app, 5000); // 间隔，毫秒
+    freezerService.sendFreezeMessageInstant(app);
+    freezerService.removeAppMessage(app);
+
+    unfreezeService.thaw(app);
+    unfreezeService.thawWithoutCheck(app);
+    unfreezeService.thawQuiet(app);
+    unfreezeService.temporaryUnfreezeIfNeed(app, '脚本操作', 3000);
 }
 ```
 
-### `await expression`
-
-等待另一个 `async function` 返回的任务，并取得其返回值：
+应用配置：
 
 ```js
-async function loadValue() {
-    sleep(91);
-    return 78;
-}
+appSettings.set(app, 'someFlag', true);
+appSettings.set(app, 'someNumber', 1);
 
-async function useValue() {
-    var value = await loadValue();
-    log.i("value = " + value);
-}
-
-useValue();
+globalSettings.set('someFlag', true);
+globalSettings.set('someNumber', 1);
+globalSettings.set('someLong', 1);
+globalSettings.set('someText', 'value', true);
 ```
 
-这里的 `await` 是 Freezer JavaScript Engine (FJE) 扩展语法。它主要用于等待 FJE 线程池任务。
+设置方法的返回值是底层设置操作的 `boolean` 结果。参数名和值的合法性由对应设置实现决定。
 
-### `synchronized(lock) { ... }`
+`network.destroyApp(app), network.getInstance()`、`activityManagerService.getContext(), activityManagerService.getInstance()` 和 `systemChecker.getSystemType()` 也属于高权限系统操作，调用前确认目标和失败行为。
 
-使用同一个锁对象的代码块会串行执行：
+## 6. 反射与 Hook (install.js不可用)
+
+查找 Java 类时，传入完整类名字符串：
 
 ```js
-var lock = {};
-var counter = 0;
-
-async function increase() {
-    synchronized(lock) {
-        counter++;
-    }
-}
-
-increase();
-increase();
+var clazz = reflection.findClass('android.app.ActivityManager');
+var method = reflection.findMethod(clazz, 'someMethod', 'java.lang.String');
+var field = reflection.findField(clazz, 'someField');
+var object = reflection.newInstance(clazz, arg1, arg2);
 ```
 
-锁必须使用稳定的对象引用：
+可用操作包括：
 
-```js
-var lock = {};       // 推荐
-var badLock = "lock"; // 不推荐作为并发锁
+```text
+findClass
+callMethod / callStaticMethod
+getObjectField / getStaticObjectField
+setObjectField / setStaticObjectField
+findMethod / findField / findConstructor
+newInstance
+hookBefore / hookAfter / hook
+unhookAll
 ```
 
-底层函数形式也可用：
+优先使用封装后的 `hooker`：
 
 ```js
-async(function () {
-    log.i("background task");
+var target = reflection.findMethod(clazz, 'target', 'java.lang.String');
+var hook = hooker.before(target, function (callback) {
+    log.d('调用前');
 });
 
-synchronized(lock, function () {
-    counter++;
-});
+// 需要提前移除时：
+hook.unhook();
 ```
 
-## 4. 注入的全局对象
+Hook 自动按脚本文件名归属，脚本卸载时统一解除。Hook 回调应快速返回，不要保存失效的 Java 对象；反射失败要捕获并记录原因。
 
-### `log`
-
-日志 API：
+## 7. 设置页 UI (install.js不可用)
 
 ```js
-log.d(message);
-log.i(message);
-log.w(message);
-log.e(message);
-```
+ui.registerPage('FJSE 示例', function () {
+    this.addSwitch('启用', '是否启用示例逻辑', true, function (value, packageName) {
+        log.i('启用=' + value + ', package=' + packageName);
+    });
 
-`log.d`、`log.w`、`log.e` 也支持第二个 `Throwable` 参数。
+    this.addDropdown('模式', ['安全', '激进'], 0, function (value, packageName) {
+        log.i('模式=' + value);
+    });
 
-### `apps`
+    this.addSlider('延迟', 0, 1000, 10, 100, function (value, packageName) {
+        log.i('延迟=' + value);
+    });
 
-应用缓存查询：
-
-```js
-var app = apps.get("com.example.app", 0);
-var appByUid = apps.getByUid(10001);
-var apps = apps.getRunningTargets();
-```
-
-不存在时返回 `null`。
-
-### `processes`
-
-进程查询：
-
-```js
-var process = processes.getProcessRecord("com.example.app:process", 10001);
-var processByObject = processes.getProcessRecord(javaObject);
-var processByPid = processes.getProcessRecord(1234);
-```
-
-不存在时返回 `null`。
-
-### `freezerService`
-
-冻结消息操作：
-
-```js
-freezerService.removeAppMessage(app);
-freezerService.sendFreezeMessageInstant(app);
-freezerService.sendFreezeMessage(app);
-freezerService.sendFreezeMessage(app, 5000);
-freezerService.sendFreezeMessageIgnoreMessages(app);
-freezerService.sendFreezeMessageIgnoreMessages(app, 5000);
-```
-
-参数 `app` 必须是 `AppCache` 获取到的App对象。
-
-### `unfreezeService`
-
-解冻操作：
-
-```js
-unfreezeService.thaw(app);
-unfreezeService.thawWithoutCheck(app);
-unfreezeService.thawWithoutRemoveMessage(app);
-unfreezeService.temporaryUnfreezeIfNeed(app, "script");
-unfreezeService.temporaryUnfreezeIfNeed(app, "script", 5000);
-```
-
-### `hooker`
-
-反射和 Hook API：
-
-```js
-var clazz = reflection.findClass("android.app.Activity");
-var constructor = reflection.findConstructor(clazz);
-var method = reflection.findMethod(clazz, "finish");
-var methodResult = reflection.callStaticMethod(clazz, "finish");
-var field = reflection.findField(clazz, "mField");
-var fieldValue = reflection.getStaticObjectField(clazz, "mField");
-reflection.setStaticObjectField(clazz, "mField", "REPLACE");
-var instance = reflection.newInstance(clazz);
-var instanceMethodResult = reflection.callMethod(instance, "finishInternal");
-reflection.setObjectField(instance, "mPrivateField", "REPLACE");
-var instanceFieldValue = reflection.getObjectField(instance, "mPrivateField");
-```
-
-Hook：
-
-```js
-var unhook = hooker.before(method, function (callback) {
-});
-
-unhook.unhook();
-
-var unhook = hooker.after(method, function (callback) {
-});
-
-unhook.unhook();
-
-var unhook = hooker.replace(method, function (callback) {
-    return null;
-});
-
-unhook.unhook();
-```
-
-## 5. 脚本对象
-
-### `AppRecord`
-
-冻结/解冻事件、`whyNotFreeze` 和 `apps` 查询返回此对象：
-
-```js
-app.getPackageName();
-app.getUserId();
-app.getUid();
-app.getApplicationInfo();
-app.isXposed();
-app.isFrozen();
-app.isSystem();
-app.isTargetApp();
-app.getCategory();
-```
-
-### `ProcessRecord`
-
-进程查询返回此对象：
-
-```js
-process.getPackageName();
-process.getProcessName();
-process.getProcessNameWithIsolated();
-process.getUserId();
-process.getUid();
-process.getRunningUid();
-process.getPid();
-process.getAppRecord();
-process.getApplicationInfo();
-process.isFrozen();
-process.isFrozenBinder();
-process.isIsolated();
-```
-
-## 6. 完整示例
-
-```js
-registerScript({
-    name: "Musicplayer Guard",
-    version: "1.0.0",
-    authors: ["Freezer Team"]
-});
-
-var lock = {};
-
-on("load", function () {
-    log.i("Musicplayer Guard loaded");
-});
-
-async function inspect(app) {
-    sleep(100);
-    synchronized(lock) {
-        log.i("inspect " + app.getPackageName());
-    }
-}
-
-on("freeze", async function (event) {
-    await inspect(event.getAppRecord());
-});
-
-on("shutdown", function () {
-    log.i("Musicplayer Guard unloaded");
+    this.addText('这是说明文字');
 });
 ```
 
-## 7. 注意事项
+也可以指定应用包名：
 
-1. `async` 任务的异常会记录到脚本日志，不能通过原事件调用栈返回。
-2. `event.cancel and event.setCancelled` 是同步判定函数，不能写成需要后台等待的异步逻辑。
-3. FJE 的 Java 对象和 Freezer API 对象可能不是普通 JavaScript 对象，不要随意复制或序列化。
-4. Hook、冻结、解冻 API 会直接影响系统服务，脚本应处理 `null` 返回值并避免长时间阻塞。
-5. 脚本卸载时会停止接收新异步任务，并等待已有任务结束；长时间 `sleep` 或死循环会延迟卸载。
+```js
+ui.registerPage('com.example.app', '应用设置', function () {
+    this.addText('仅显示在目标应用设置中');
+});
+```
+
+- `addSwitch(title, summary?, defaultValue, callback)` 回调参数为 `(boolean, packageName)`。
+- `addDropdown(title, summary?, items, defaultIndex, callback)` 回调参数为 `(int, packageName)`。
+- `addSlider(title, min, max, increment?, defaultValue, callback)` 回调参数为 `(double, packageName)`。
+- `addText(text, callback?)` 的回调参数为 `(reason, packageName)`。
+- UI 模块按脚本隔离；脚本卸载时自动清理。
+
+## 8. 语法与调试
+
+FJSE 支持现代 JavaScript 语法，并提供部分可选的简化写法。发布脚本时建议优先使用标准 JavaScript，以便在不同版本间迁移。
+
+常见日志：
+
+- 加载失败：确认文件名为 `.js`、编码为 UTF-8。
+- 查询失败：检查目标包名、用户 ID、进程 PID 和返回值是否为 `null`。
+- 事件未触发：检查事件名称、脚本是否已重新加载，以及回调是否抛出异常。
+- Hook 或系统操作失败：检查目标和参数类型，并缩小操作范围。
+- 设置页不显示：确认页面名称和回调有效，并将控件创建代码放在页面回调中。
+
+错误信息通常会包含脚本文件名和行号；请据此定位问题。
+## 9. 开发清单
+
+新增脚本：
+
+- [ ] 使用 UTF-8、`.js` 扩展名。
+- [ ] 首先注册非空脚本名。
+- [ ] 对 `apps`、`processes` 和事件对象做空值/字段检查。
+- [ ] 长任务使用 `async`，并在 `shutdown` 中停止自有资源。
+- [ ] 在 `shutdown` 中解除手动保存的 Hook 或计时器。
+- [ ] 只在确认目标后调用反射和系统服务。
+
+## 10. 常见问题
+
+### 脚本没有加载
+
+确认文件扩展名为 `.js`、文件编码为 UTF-8。修改文件后重新加载脚本。
+
+### 查询结果为空
+
+应用或进程可能不存在、尚未运行，或用户 ID 不正确。使用服务前始终检查返回值是否为 `null`。
+
+### 事件没有触发
+
+检查事件名称拼写和大小写，并确认脚本已经重新加载。事件回调只会收到一个事件对象；可用的属性取决于具体事件类型。
+
+### Hook 或系统操作失败
+
+确认目标类、方法、字段和参数类型正确。反射、Hook、网络管理和冻结操作具有较高权限，只针对明确目标使用，并在回调中记录失败原因。
+
+### 设置页没有显示
+
+确认 `ui.registerPage` 的页面名称和回调有效，并将控件创建代码放在页面回调内部。脚本卸载后，相关页面会被自动移除。
+
+## 11. 版本兼容提示
+
+本文档描述当前公开的 FJSE API。Freezer 更新后，个别事件属性或系统相关行为可能发生变化；发布脚本前请在目标 Freezer 版本和目标 Android 系统上验证加载、事件、设置页以及卸载流程。
