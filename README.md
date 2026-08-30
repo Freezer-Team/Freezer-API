@@ -9,7 +9,7 @@ Freezer Java Script Engine（FJSE）是 Freezer 内置的 Rhino JavaScript 运�
 ### 模块结构说明
 核心控制逻辑：main.js（API 入口与接口导出）
 
-安装/部署脚本：install.js（处理环境初始化与动态库加载）
+安装/部署脚本：install.js（处理环境初始化）
 
 配置文件：data.yaml（模块参数与 API 规则定义）
 
