@@ -138,3 +138,39 @@ on("shutdown", function () {
     
     log.i("ReKernelX 已卸载");
 });
+
+on("action", function () {
+    if (isRunning) {
+        log.i("正在卸载 ReKernelX...");
+    
+        isRunning = false;
+    
+        try {
+            ReKernelX.disconnect();
+        } catch (e) {
+            log.e("断开连接异常: " + e);
+        }
+    
+        log.i("ReKernelX 已卸载");
+    } else {
+        ReKernelX.setCallback(callback);
+
+        if (ReKernelX.connect()) {
+            isRunning = true;
+            log.i("ReKernelX 服务已连接");
+
+            async(function () {
+                while (isRunning) {
+                    try {
+                        ReKernelX.pollEvent();
+                    } catch (e) {
+                        log.e("pollEvent 异常: " + e);
+                        break;
+                    }
+                }
+            });
+        } else {
+            log.e("ReKernelX 连接失败");
+        }
+    }
+});
